@@ -1,39 +1,5 @@
 # 🔊 NetSonar
 
-# 📸 Screenshots
-
-## 🖥️ Live SOC Dashboard
-
-![NetSonar Dashboard](screenshots/dashboard.png)
-
-Real-time network telemetry, security monitoring, protocol analytics, and audio intelligence.
-
----
-
-## 〰️ Real-Time Audio Waveform
-
-![NetSonar Waveform](screenshots/waveform.png)
-
-Network events are converted into audio telemetry and visualized as a dynamic waveform.
-
----
-
-## 📡 Live Network Capture
-
-![NetSonar Packet Capture](screenshots/packet_capture.png)
-
-Live packets captured from the Linux network interface and classified by protocol/service.
-
----
-
-## 🚨 Security Detection
-
-![NetSonar Security Alert](screenshots/security_alert.png)
-
-Security events such as traffic spikes and TCP SYN port scans are highlighted with severity information.
-
----
-
 ### Network Traffic Sonification & Security Monitoring Platform
 
 > **TURN NETWORK TRAFFIC INTO SOUND.**
@@ -84,6 +50,38 @@ Sonification Engine
                               ▼
                      Streamlit SOC Dashboard
 ```
+
+---
+
+## 🖥️ Live SOC Dashboard
+
+![NetSonar Dashboard](screenshots/dashboard.png)
+
+Real-time network telemetry, security monitoring, protocol analytics, and audio intelligence.
+
+---
+
+## 〰️ Real-Time Audio Waveform
+
+![NetSonar Waveform](screenshots/waveform.png)
+
+Network events are converted into audio telemetry and visualized as a dynamic waveform.
+
+---
+
+## 📡 Live Network Capture
+
+![NetSonar Packet Capture](screenshots/packet_capture.png)
+
+Live packets captured from the Linux network interface and classified by protocol/service.
+
+---
+
+## 🚨 Security Detection
+
+![NetSonar Security Alert](screenshots/security_alert.png)
+
+Security events such as traffic spikes and TCP SYN port scans are highlighted with severity information.
 
 ---
 
