@@ -1,0 +1,374 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import time
+
+import streamlit as st
+
+
+LOG_FILE = "logs/network_events.log"
+STATS_FILE = "data/live_stats.json"
+
+
+st.set_page_config(
+    page_title="NetSonar SOC",
+    page_icon="📡",
+    layout="wide",
+)
+
+
+def read_events():
+    if not os.path.exists(LOG_FILE):
+        return []
+
+    with open(LOG_FILE, "r", encoding="utf-8") as file:
+        return [
+            line.strip()
+            for line in file
+            if line.strip()
+        ]
+
+
+def read_stats():
+
+    if not os.path.exists(STATS_FILE):
+        return {
+            "total_packets": 0,
+            "total_bytes": 0,
+            "packets_per_second": 0,
+            "protocols": {},
+            "unique_source_ips": 0,
+            "unique_destination_ips": 0,
+            "destination_ports": {},
+        }
+
+    try:
+
+        with open(
+            STATS_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            return json.load(file)
+
+    except (json.JSONDecodeError, OSError):
+
+        return {
+            "total_packets": 0,
+            "total_bytes": 0,
+            "packets_per_second": 0,
+            "protocols": {},
+            "unique_source_ips": 0,
+            "unique_destination_ips": 0,
+            "destination_ports": {},
+        }
+
+
+def count_event(events, event_type):
+
+    return sum(
+        f"TYPE={event_type}" in event
+        for event in events
+    )
+
+
+# --------------------------------------------------
+# DATA
+# --------------------------------------------------
+
+events = read_events()
+stats = read_stats()
+
+high_events = sum(
+    "SEVERITY=HIGH" in event
+    for event in events
+)
+
+port_scans = count_event(
+    events,
+    "PORT_SCAN"
+)
+
+traffic_spikes = count_event(
+    events,
+    "TRAFFIC_SPIKE"
+)
+
+protocols = stats.get(
+    "protocols",
+    {}
+)
+
+
+# --------------------------------------------------
+# HEADER
+# --------------------------------------------------
+
+st.title("📡 NetSonar SOC Dashboard")
+
+st.caption(
+    "Linux Network Traffic Sonification & Security Monitor"
+)
+
+st.divider()
+
+
+# --------------------------------------------------
+# LIVE TRAFFIC
+# --------------------------------------------------
+
+st.subheader("📡 Live Traffic")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+
+    st.metric(
+        "Packets",
+        stats.get("total_packets", 0)
+    )
+
+with col2:
+
+    st.metric(
+        "Traffic",
+        f"{stats.get('total_bytes', 0):,} B"
+    )
+
+with col3:
+
+    st.metric(
+        "Packets / Sec",
+        stats.get("packets_per_second", 0)
+    )
+
+with col4:
+
+    st.metric(
+        "Active Sources",
+        stats.get("unique_source_ips", 0)
+    )
+
+
+# --------------------------------------------------
+# NETWORK OVERVIEW
+# --------------------------------------------------
+
+st.subheader("🌐 Network Overview")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        "Destination Hosts",
+        stats.get(
+            "unique_destination_ips",
+            0
+        )
+    )
+
+with col2:
+
+    st.metric(
+        "Protocols",
+        len(protocols)
+    )
+
+with col3:
+
+    st.metric(
+        "Destination Ports",
+        len(
+            stats.get(
+                "destination_ports",
+                {}
+            )
+        )
+    )
+
+
+st.divider()
+
+
+# --------------------------------------------------
+# PROTOCOL DISTRIBUTION
+# --------------------------------------------------
+
+st.subheader("📊 Protocol Distribution")
+
+if protocols:
+
+    st.bar_chart(protocols)
+
+else:
+
+    st.info(
+        "Waiting for network traffic..."
+    )
+
+
+st.divider()
+
+
+# --------------------------------------------------
+# SECURITY OVERVIEW
+# --------------------------------------------------
+
+st.subheader("🛡️ Security Overview")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+
+    st.metric(
+        "Security Events",
+        len(events)
+    )
+
+with col2:
+
+    st.metric(
+        "High Severity",
+        high_events
+    )
+
+with col3:
+
+    st.metric(
+        "Port Scans",
+        port_scans
+    )
+
+with col4:
+
+    st.metric(
+        "Traffic Spikes",
+        traffic_spikes
+    )
+
+
+st.divider()
+
+
+# --------------------------------------------------
+# RECENT SECURITY EVENTS
+# --------------------------------------------------
+
+st.subheader("🚨 Recent Security Events")
+
+if events:
+
+    for event in reversed(events[-10:]):
+
+        if "SEVERITY=HIGH" in event:
+
+            st.error(event)
+
+        elif "SEVERITY=MEDIUM" in event:
+
+            st.warning(event)
+
+        else:
+
+            st.info(event)
+
+else:
+
+    st.success(
+        "No security events detected."
+    )
+
+
+# --------------------------------------------------
+# DESTINATION PORTS
+# --------------------------------------------------
+
+st.divider()
+
+st.subheader("🔌 Destination Ports")
+
+ports = stats.get(
+    "destination_ports",
+    {}
+)
+
+if ports:
+
+    st.bar_chart(ports)
+
+else:
+
+    st.info(
+        "No destination port activity."
+    )
+
+
+# --------------------------------------------------
+# RAW LOG
+# --------------------------------------------------
+
+st.divider()
+
+with st.expander("📄 View Raw Event Log"):
+
+    if events:
+
+        st.code(
+            "\n".join(events),
+            language="text"
+        )
+
+    else:
+
+        st.write(
+            "Event log is empty."
+        )
+
+
+# --------------------------------------------------
+# STATUS
+# --------------------------------------------------
+
+st.divider()
+
+st.subheader("🖥️ NetSonar Status")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        "Monitoring",
+        "ACTIVE"
+    )
+
+with col2:
+
+    st.metric(
+        "Interface",
+        "eth0"
+    )
+
+with col3:
+
+    st.metric(
+        "Statistics",
+        "LIVE" if os.path.exists(
+            STATS_FILE
+        ) else "WAITING"
+    )
+
+
+st.caption(
+    "NetSonar | Linux Network Traffic "
+    "Sonification & Security Monitor"
+)
+
+
+# Refresh dashboard every 2 seconds.
+
+time.sleep(2)
+st.rerun()

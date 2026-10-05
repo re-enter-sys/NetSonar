@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+import tempfile
+
+from audio.tones import generate_tone
+
+
+class SoundEngine:
+
+    PROTOCOL_FREQUENCIES = {
+        "TCP": 440,
+        "UDP": 660,
+        "ICMP": 880,
+        "DNS": 1000,
+        "HTTPS": 550,
+        "OTHER": 300,
+    }
+
+    def __init__(self):
+        self.audio_dir = os.path.join(
+            tempfile.gettempdir(),
+            "netsonar_audio"
+        )
+
+        os.makedirs(self.audio_dir, exist_ok=True)
+
+    def play_tone(
+        self,
+        frequency,
+        duration=0.08,
+        volume=0.25
+    ):
+        frequency = int(max(100, min(frequency, 2000)))
+        duration = max(0.03, min(duration, 0.5))
+        volume = max(0.05, min(volume, 0.8))
+
+        filename = os.path.join(
+            self.audio_dir,
+            f"tone_{frequency}_{int(duration * 1000)}_{int(volume * 100)}.wav"
+        )
+
+        if not os.path.exists(filename):
+            generate_tone(
+                frequency=frequency,
+                duration=duration,
+                volume=volume,
+                output_file=filename
+            )
+
+        subprocess.Popen(
+            ["aplay", "-q", filename],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+    def play_protocol(
+        self,
+        protocol,
+        packet_size=100
+    ):
+        base_frequency = self.PROTOCOL_FREQUENCIES.get(
+            protocol,
+            self.PROTOCOL_FREQUENCIES["OTHER"]
+        )
+
+        # Larger packets produce slightly higher frequency
+        frequency = base_frequency + min(
+            packet_size // 20,
+            200
+        )
+
+        # Larger packets produce louder tones
+        volume = 0.15 + min(
+            packet_size / 1500,
+            0.45
+        )
+
+        # Larger packets produce slightly longer tones
+        duration = 0.05 + min(
+            packet_size / 5000,
+            0.20
+        )
+
+        self.play_tone(
+            frequency=frequency,
+            duration=duration,
+            volume=volume
+        )
+
+    def play_alert(self):
+        self.play_tone(
+            frequency=1200,
+            duration=0.12,
+            volume=0.5
+        )
+
+        self.play_tone(
+            frequency=700,
+            duration=0.12,
+            volume=0.5
+        )
+
+
+if __name__ == "__main__":
+
+    engine = SoundEngine()
+
+    print("NETSONAR DYNAMIC SOUND ENGINE")
+    print("=" * 45)
+
+    print("Small TCP packet...")
+    engine.play_protocol("TCP", 60)
+
+    print("Large TCP packet...")
+    engine.play_protocol("TCP", 1400)
+
+    print("UDP packet...")
+    engine.play_protocol("UDP", 300)
+
+    print("ICMP packet...")
+    engine.play_protocol("ICMP", 98)
+
+    print("Security alert...")
+    engine.play_alert()
+
+    print("Test complete.")

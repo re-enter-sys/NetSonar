@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Runtime data
+data/live_stats.json
+data/live_audio.json
+
+# Runtime logs
+logs/*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local configuration / secrets
+.env
+.env.*
+*.local
+
+# Project-specific TLS workaround
+openssl-tls12.cnf
+
+# Test/cache
+.pytest_cache/
+.coverage
+htmlcov/
